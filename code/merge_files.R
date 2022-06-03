@@ -19,21 +19,35 @@ year_files <- list.files(f)
 ff <- file.path(f, year_files[2])
 d1 <- read_dta(ff)
 
-df_list <- map(
-  year_files,
-  function(file) {
-    full_path <- file.path(f, file)
-    df <- read_dta(full_path)
+
+log <- as.data.frame(matrix(ncol = 3, nrow = 0))
+df_list <- list()
+  
+for (file in year_files) {
+  full_path <- file.path(f, file)
+  df <- read_dta(full_path)
+  
+  has_pidlink <- "pidlink" %in% tolower(names(df))
+  
+  log_entry <- data.frame(
+    "file"= file,
+    "pidlink" = has_pidlink,
+    "nrow" = nrow(df)
+  )
+  
+  log <- rbind(
+    log,
+    log_entry
+  )
+  message(paste(
+    '--------------------\n',
+    "File:", log_entry$file, '\n',
+    "Has pidlink:", log_entry$pidlink, "\n",
+    "N. rows:", log_entry$nrow, '\n'
+  ))
+  
+  df_list[[file]] <- df
+}
+write_csv(log, "code/merge_files_log.csv")
+
     
-    has_pidlink <- "pidlink" %in% tolower(names(df))
-    
-    message(paste0(
-      file, 
-      ": Has PIDLINK: ",
-      has_pidlink,
-      " nrow: ",
-      nrow(df)
-    ))
-    return(df)
-  }
-)
